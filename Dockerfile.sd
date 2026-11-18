@@ -1,0 +1,48 @@
+FROM python:3.10-slim-bookworm
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10 \
+    STABLE_DIFFUSION_REPO=https://github.com/w-e-w/stablediffusion.git
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git wget build-essential libgl1 libglib2.0-0 libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# pip 25.2 permet de reprendre les téléchargements interrompus.
+RUN python -m pip install \
+    pip==25.2 setuptools==69.5.1 wheel
+
+# Étape indépendante : PyTorch reste en cache si la suite échoue.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install \
+    --timeout 120 \
+    --retries 10 \
+    --resume-retries 20 \
+    torch==2.1.2 torchvision==0.16.2 \
+    --index-url https://download.pytorch.org/whl/cu121
+
+# On conserve le pip initial pour les anciennes dépendances WebUI.
+RUN python -m pip install pip==24.0
+
+COPY stable-diffusion-webui/ ./
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python launch.py --skip-torch-cuda-test --exit
+
+# Versions compatibles avec l'ancienne API utilisée par ControlNet.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install \
+    mediapipe==0.10.9 \
+    numpy==1.26.2 \
+    protobuf==3.20.0 \
+    opencv-contrib-python==4.8.1.78 \
+    && python -c "import mediapipe as mp; assert hasattr(mp, 'solutions'); print('MediaPipe', mp.__version__, '- solutions OK')"
+
+EXPOSE 7860
+
+CMD ["python", "launch.py", "--api", "--listen", "--port", "7860", \
+    "--cors-allow-origins", \
+    "http://localhost:3000,http://127.0.0.1:3000"]

@@ -1,0 +1,11 @@
+.git
+**/.git
+**/node_modules
+**/venv
+**/.venv
+**/__pycache__
+.env
+
+stable-diffusion-webui/models
+stable-diffusion-webui/outputs
+stable-diffusion-webui/repositories

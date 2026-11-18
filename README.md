@@ -1,5 +1,5 @@
 # FusAIn
-
+##THIS IS A COPY OF WORK THAT ALR EXIST NOT MINE!
 ## What is FusAIn?
 In the [FusAIn research project](https://dl.acm.org/doi/10.1145/3706598.3714027) we developed FusAIn, a GenAI visual
 prompt composition tool that lets creators interact with personalized
